@@ -12,3 +12,9 @@ export const db = pgp({
     user: process.env.PGUSER!,
     password: process.env.PGPASSWORD!,
 });
+
+console.log("ENV CHECK:", {
+  host: process.env.PGHOST,
+  user: process.env.PGUSER,
+  db: process.env.PGDATABASE,
+});

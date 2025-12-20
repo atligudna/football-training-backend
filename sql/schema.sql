@@ -115,5 +115,5 @@ CREATE TABLE drill_tags (
 CREATE INDEX idx_drills_category ON drills(category_id);
 CREATE INDEX idx_drills_creator ON drills(created_by);
 CREATE INDEX idx_drill_items_drill ON drill_items(drill_id);
-CREATE INDEX idx_sessions_coach ON sessions(coach_id);
+CREATE INDEX idx_sessions_coßach ON sessions(coach_id);
 CREATE INDEX idx_session_drills_session ON session_drills(session_id);
