@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { UserModel } from "../models/userModel";
+import { generateToken } from "../utils/jwt";
 
 
 export const AuthController = {
@@ -44,7 +44,7 @@ export const AuthController = {
         if(!user || user.is_deleted)  {
             return res.status(401).json({
                 success: false,
-                message: "Invalid credentials"
+                message: "Invalid login credentials"
             });
         }
         
@@ -52,18 +52,19 @@ export const AuthController = {
         if(!match) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid credentials"
+                message: "Invalid login credentials"
             });
         }
-        const token = jwt.sign(
-            {userId: user.id,role: user.role},
-            process.env.JWT_SECRET!,
-            { expiresIn: "24h" }
-        );
+
+
+        const token = generateToken(user.id, user.role);
+
+        const { password_hash, ...safeUser } = user;
 
         res.json({
             success: true,
-            token
+            token,
+            user: safeUser
         });
       } catch (error) {
         next(error);

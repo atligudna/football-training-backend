@@ -10,6 +10,7 @@ export interface User {
     password_hash: string;
     role: string;
     is_deleted: boolean;
+    created_at: string;
 }
 
 export const UserModel = {
@@ -31,5 +32,25 @@ export const UserModel = {
     },
     async findById(id: number): Promise<User | null> {
         return db.oneOrNone("SELECT * FROM users WHERE id = $1", [id]);
-    }
+    },
+    async update(id: number, data: {name?: string, email?: string}) {
+        return db.one(
+            `UPDATE users
+            SET
+                name = COALESCE($2, name),
+                email = COALESCE($3, email),
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING id, name, email, role, created_at`,
+            [id, data.name, data.email]
+        );
+    },
+    async softDelete(id: number) {
+    return db.none(
+        `UPDATE users 
+         SET is_deleted = TRUE, updated_at = NOW()
+         WHERE id = $1`,
+        [id]
+    );
+}
 };
