@@ -35,14 +35,14 @@ export const DrillItemModel = {
         ]
         );
     },
-    async drill(id: number, data: Partial<DrillItem>) {
+    async update(id: number, data: Partial<DrillItem>) {
         return db.oneOrNone(
             `UPDATE drill_items SET
             type = COALESCE($2, type),
-            x = COALESCE($3,x),
-            y = COALESCE($4,y),
-            rotation = COALESCE(#5, rotation)
-            color = COALESCE(#6, color),
+            x = COALESCE($3, x),
+            y = COALESCE($4, y),
+            rotation = COALESCE($5, rotation),
+            color = COALESCE($6, color),
             label = COALESCE($7, label),
             team_color = COALESCE($8, team_color)
             WHERE id = $1

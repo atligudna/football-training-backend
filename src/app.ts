@@ -6,6 +6,7 @@ import drillRoutes from "./routes/drillRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import fieldRoutes from "./routes/fieldRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js"
+import drillItemRoutes from "./routes/drillItemRoutes.js"
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use("/drills", drillRoutes);
 app.use("/users", userRoutes);
 app.use("/fields", fieldRoutes);
 app.use("/categories", categoryRoutes);
+app.use("/drills", drillItemRoutes);
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({

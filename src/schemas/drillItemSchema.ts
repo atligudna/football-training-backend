@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const drillItemSchema = z.object({
+export const drillItemCreateSchema = z.object({
     type: z.enum([
         "player", "cone", "ball", "goal", "arrow",
         "run", "zone", "pass", "shot", "dribble"
@@ -8,9 +8,9 @@ export const drillItemSchema = z.object({
     x: z.number().min(0).max(100),
     y: z.number().min(0).max(100),
     rotation: z.number().optional(),
-    color: z.string().optional,
+    color: z.string().optional(),
     label: z.string().optional(),
-    team_color: z.string().optional
+    team_color: z.string().optional()
 });
 
-export const drillItemUpdateSchema = drillItemSchema.partial();
+export const drillItemUpdateSchema = drillItemCreateSchema.partial();
