@@ -19,14 +19,14 @@ export const DrillItemModel = {
         return db.any("SELECT * FROM drill_items WHERE drill_id = $1", [drill_id]);
     },
 
-    async create(drill_id: number, data: Omit<DrillItem, "id" | "drill_id">) {
+    async create(drillid: number, data: Omit<DrillItem, "id" | "drill_id">) {
         return db.one(
             `INSERT INTO drill_items
             (drill_id, type, x, y, rotation, color, label, team_color)
             VALUES($1,$2,$3,$4,$5,$6,$7,$8)
             RETURNING *`,
         [
-            drill_id,
+            drillid,
             data.type, data.x, data.y,
             data.rotation || null, 
             data.color || null, 
@@ -57,7 +57,7 @@ export const DrillItemModel = {
     },
     async remove(id: number) {
         await db.none(
-            "DELETE FROM drill_items WHERE id $1",
+            `DELETE FROM drill_items WHERE id $1`,
         )
     }
 };

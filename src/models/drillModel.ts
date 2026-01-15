@@ -81,7 +81,9 @@ export const DrillModel = {
 
     async remove(id: number): Promise<void> {
         await db.none(
-            "UPDATE drills SET is_deleted = TRUE WHERE id = $1",
+            `UPDATE drills 
+            SET is_deleted = TRUE 
+            WHERE id = $1`,
             [id]
         );
     }

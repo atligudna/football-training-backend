@@ -5,8 +5,10 @@ import { requireAuth } from "./middleware/auth.js";
 import drillRoutes from "./routes/drillRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import fieldRoutes from "./routes/fieldRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js"
-import drillItemRoutes from "./routes/drillItemRoutes.js"
+import categoryRoutes from "./routes/categoryRoutes.js";
+import drillItemRoutes from "./routes/drillItemRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
+import equipmentRoutes from "./routes/equipmentRoutes.js";
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.use("/users", userRoutes);
 app.use("/fields", fieldRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/drills", drillItemRoutes);
+app.use("/sessions", sessionRoutes);
+app.use("/equipment", equipmentRoutes);
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({

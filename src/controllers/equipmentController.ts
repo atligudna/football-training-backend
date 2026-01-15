@@ -1,56 +1,63 @@
 import { NextFunction, Request, Response } from "express";
-import { DrillItemModel } from "../models/drillItemModel";
+import { EquipmentModel } from "../models/equipmentModel";
 
 
-
-export const DrillItemController = {
+export const EquipmentController = {
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const drillId = Number(req.params.drillId);
-            const items = await DrillItemModel.getByDrill(drillId);
-
+            const items = await EquipmentModel.getAll();
             res.json({ 
                 success: true, 
-                data: items 
-            });
+                data: items });
         } catch (error) {
             next(error);
         }
     },
+
     async create(req: Request, res: Response, next: NextFunction) {
         try {
-            const drillId = Number(req.params.drillId);
-            const item = await DrillItemModel.create(drillId, req.body);
-
+            const { name } = req.body;
+            const item = await EquipmentModel.create(name);
             res.status(201).json({ 
                 success: true, 
-                data: item 
+                data: item
             });
         } catch (error) {
             next(error);
         }
     },
-    async update(req: Request, res: Response, next: NextFunction) {
-        try {
-            const id = Number( req.params.id);
-            const updated = await DrillItemModel.update(id, req.body);
 
-            res.json({ 
+    async update (req: Request, res: Response, next: NextFunction) {
+        try {
+            const id = Number(req.params.id);
+            const { name } = req.body;
+
+            const updated = await EquipmentModel.update(id, name);
+
+            if(!updated) {
+                return res.status(404).json({
+                    success: false, 
+                    message: "Item not found"
+                })
+            }
+            
+            res.json({
                 success: true, 
                 data: updated
-            });
+            }); 
+            
         } catch (error) {
             next(error);
         }
     },
+    
     async remove(req: Request, res: Response, next: NextFunction) {
         try {
             const id = Number(req.params.id);
-            await DrillItemModel.remove(id);
-
+            await EquipmentModel.remove(id);
             res.json({ 
                 success: true, 
-                message: "Item deleted"
+                message: "Equipment deleted" 
             });
         } catch (error) {
             next(error);

@@ -5,7 +5,10 @@ export const CategoryController = {
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             const categories = await CategoryModel.getAll();
-            res.json({success: true, data: categories});
+            res.json({
+                success: true, 
+                data: categories
+            });
         } catch (error) {
             next(error);            
         }

@@ -35,6 +35,9 @@ export const CategoryModel = {
     },
 
     async remove(id: number): Promise<void> {
-        await db.none("DELETE FROM categories WHERE id = $1", [id]);
+        await db.none(
+            `DELETE FROM categories 
+            WHERE id = $1`,
+            [id]);
     }
 };

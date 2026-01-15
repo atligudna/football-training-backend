@@ -12,6 +12,6 @@ router.post("/:drillId/items", requireAuth, validateBody(drillItemCreateSchema),
 
 router.patch("/items/:id", requireAuth, validateBody(drillItemUpdateSchema), DrillItemController.update)
 
-router.delete("items:id", requireAuth, DrillItemController.remove);
+router.delete("items/:id", requireAuth, DrillItemController.remove);
 
 export default router;

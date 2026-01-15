@@ -42,7 +42,8 @@ export const FieldModel = {
 
     async remove(id: number): Promise<boolean> {
         const result = await db.query(
-            "DELETE FROM fields WHERE id = $1",
+            `DELETE FROM fields 
+            WHERE id = $1`,
             [id]
         );
         return result.rowCount > 0
