@@ -34,10 +34,14 @@ export const CategoryModel = {
         );
     },
 
-    async remove(id: number): Promise<void> {
-        await db.none(
-            `DELETE FROM categories 
+    async remove(id: number): Promise<boolean> {
+        const result = await db.result(
+            `UPDATE categories SET is_deleted = TRUE
             WHERE id = $1`,
-            [id]);
+            [id]
+        );
+
+        return result.rowCount > 0;
     }
+
 };

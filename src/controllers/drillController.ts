@@ -1,15 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { DrillModel } from "../models/drillModel";
+import { successResponse } from "../middleware/success";
 
 export const DrillController = {
   async getAll(req: Request, res: Response, next: NextFunction){
     try {
       const drills = await DrillModel.getAll();
       
-      res.json({
-        success: true,
-        data: drills
-    });
+      return successResponse(res, drills);
     } catch (error) {
       next(error);
     }
@@ -21,15 +19,14 @@ export const DrillController = {
       const drill = await DrillModel.getById(id);
 
       if(!drill) {
-        return res.status(404).json({
-          success: false,
-          message: "Drill not found"
-        });
+        throw { 
+          status: 404, 
+          message: "Drill not found" 
+        };
       }
-      res.json({
-        success: true,
-        data: drill
-      });
+      
+      return successResponse(res, drill);
+
     } catch (error) {
       next(error);
     }
@@ -49,10 +46,7 @@ export const DrillController = {
       created_by: userId
     });
     
-    res.json({
-      success: true,
-      data: drill
-    });
+    return successResponse(res, drill, 201);
     } catch (error) {
       next(error);
     }
@@ -64,13 +58,13 @@ export const DrillController = {
       const updated = await DrillModel.update(id, req.body);
       
       if (!updated) {
-        return res.status(404).json({
-          success: false,
-          message: "Drill not found"
-        });
+        throw { 
+          status: 404, 
+          message: "Drill not found" 
+        };
       }
       
-      res.json({ success: true, data: updated });
+      return successResponse(res, updated); 
     } catch (error) {
       next(error);
     }
@@ -82,19 +76,18 @@ export const DrillController = {
       const drill = await DrillModel.getById(id);
 
       if (!drill) {
-        return res.status(404).json({
-          success:false,
-          message: "Drill not found"
-        });
+        throw { 
+          status: 404, 
+          message: "Drill not found" 
+        };
       }
 
       await DrillModel.remove(id);
 
-      res.json({
-        success: true,
+      return successResponse(res, {
         message: "Drill deleted"
       });
-      
+
     } catch (error) {
       next(error); 
     } 

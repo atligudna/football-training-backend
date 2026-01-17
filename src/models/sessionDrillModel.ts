@@ -22,7 +22,7 @@ export const SessionDrillModel = {
         session_id: number;
         drill_id: number;
         order_number: number;
-        duration_override?: number | null;
+        duration_override: number | null;
     }): Promise<SessionDrill> {
         return db.one(
             `INSERT INTO session_drills 
@@ -35,6 +35,41 @@ export const SessionDrillModel = {
                 data.order_number,
                 data.duration_override ?? null
             ]
+        );
+    },
+    async updateOrder(id: number, newOrder: number) {
+        return db.oneOrNone(
+            `UPDATE session_drills
+             SET order_number = $2
+             WHERE id = $1
+             RETURNING *`,
+             [id, newOrder]
+        );
+    },
+
+    async updateDuration(id: number, newOrder: number) {
+        return db.oneOrNone(
+            `UPDATE session_drills
+            SET order_number = $2
+            WHERE id = $1
+            RETURNING *`,
+            [id, newOrder]
+        );
+    },
+    async replaceDrill(id: number, newDrillId: number) {
+        return db.oneOrNone(
+            `UPDATE session_drills
+            SET drill_id = $2
+            WHERE id = $1
+            RETURNING *`,
+            [id, newDrillId]
+        );
+    },
+    async remove(id: number) {
+        return db.none(
+            `DELETE FROM session_drills
+            WHERE id= $1`,
+            [id]
         );
     }
 };

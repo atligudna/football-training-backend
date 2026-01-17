@@ -55,9 +55,12 @@ export const DrillItemModel = {
              ]
         );
     },
-    async remove(id: number) {
-        await db.none(
-            `DELETE FROM drill_items WHERE id $1`,
-        )
+    async remove(id: number): Promise<boolean> {
+        const result = await db.result(
+            `DELETE FROM drill_items WHERE id = $1`,
+            [id]
+        );
+
+        return result.rowCount > 0;
     }
 };

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { SessionModel } from "../models/sessionModel.js";
 import { SessionDrillModel } from "../models/sessionDrillModel.js";
+import { successResponse } from "../middleware/success.js";
 
 export const SessionController = {
     async getAll(req: Request, res: Response, next: NextFunction) {
@@ -9,7 +10,7 @@ export const SessionController = {
 
             const sessions = await SessionModel.getAllByCoach(coachId);
 
-            res.json({ success: true, data: sessions });
+            return successResponse(res, sessions);
         } catch (err) {
             next(err);
         }
@@ -21,12 +22,15 @@ export const SessionController = {
 
             const session = await SessionModel.getById(id);
             if (!session) {
-                return res.status(404).json({ success: false, message: "Session not found" });
+                throw { 
+                    status: 404, 
+                    message: "Session not found" 
+                };
             }
 
             const drills = await SessionDrillModel.getBySession(id);
 
-            res.json({ success: true, data: { session, drills } });
+            return successResponse(res, { session, drills });
         } catch (err) {
             next(err);
         }
@@ -58,7 +62,7 @@ export const SessionController = {
                 }
             }
 
-            res.status(201).json({ success: true, data: session });
+            return successResponse(res, session, 201);
         } catch (err) {
             next(err);
         }
@@ -70,10 +74,13 @@ export const SessionController = {
 
             const session = await SessionModel.update(id, req.body);
             if (!session) {
-                return res.status(404).json({ success: false, message: "Session not found" });
+                throw { 
+                    status: 404, 
+                    message: "Session not found"
+                };
             }
-
-            res.json({ success: true, data: session });
+        
+            return successResponse(res, session);
         } catch (err) {
             next(err);
         }
@@ -85,7 +92,7 @@ export const SessionController = {
 
             await SessionModel.remove(id);
 
-            res.json({ success: true, message: "Session deleted" });
+            return successResponse(res, { message: "Session deleted" });
         } catch (err) {
             next(err);
         }

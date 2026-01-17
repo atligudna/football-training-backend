@@ -1,14 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { EquipmentModel } from "../models/equipmentModel";
+import { successResponse } from "../middleware/success";
 
 
 export const EquipmentController = {
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             const items = await EquipmentModel.getAll();
-            res.json({ 
-                success: true, 
-                data: items });
+            return successResponse(res, items);
         } catch (error) {
             next(error);
         }
@@ -18,10 +17,7 @@ export const EquipmentController = {
         try {
             const { name } = req.body;
             const item = await EquipmentModel.create(name);
-            res.status(201).json({ 
-                success: true, 
-                data: item
-            });
+            return successResponse(res, item, 201);
         } catch (error) {
             next(error);
         }
@@ -35,16 +31,13 @@ export const EquipmentController = {
             const updated = await EquipmentModel.update(id, name);
 
             if(!updated) {
-                return res.status(404).json({
-                    success: false, 
-                    message: "Item not found"
-                })
+                throw { 
+                    status: 404, 
+                    message: "Equipment entry not found" 
+                };
             }
             
-            res.json({
-                success: true, 
-                data: updated
-            }); 
+              return successResponse(res, updated);
             
         } catch (error) {
             next(error);
@@ -55,10 +48,7 @@ export const EquipmentController = {
         try {
             const id = Number(req.params.id);
             await EquipmentModel.remove(id);
-            res.json({ 
-                success: true, 
-                message: "Equipment deleted" 
-            });
+            return successResponse(res, { message: "Equipment removed" });
         } catch (error) {
             next(error);
         }

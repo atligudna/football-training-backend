@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { FieldModel } from "../models/fieldModel";
+import { successResponse } from "../middleware/success";
 
 
 
@@ -7,7 +8,7 @@ export const FieldController = {
     async getAll (req: Request, res: Response, next: NextFunction) {
         try {
             const fields = await FieldModel.getAll();
-            res.json({success: true, data: fields})
+            return successResponse(res, fields);
         } catch (error) {
             next(error);
         }
@@ -17,24 +18,21 @@ export const FieldController = {
             const id = Number(req.params.id);
 
             if (Number.isNaN(id)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid field id"
-                });
+                throw { 
+                    status: 400, 
+                    message: "Invalid field ID" };
             }
 
             const field = await FieldModel.getById(id);
 
             if(!field) {
-                return res.status(404).json({
-                     success: false, 
-                     error: "Field not found."
-                    });
+                throw { 
+                    status: 404, 
+                    message: "Field not found" 
+                };
             }
-            res.json({
-                success: true,
-                data: field
-            });
+            return successResponse(res, field);
+            
         } catch (error) {
             next(error)            
         }
@@ -42,7 +40,7 @@ export const FieldController = {
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const field = await FieldModel.create(req.body);
-            res.status(201).json({ success: true, data: field});
+            return successResponse(res, field, 201);
         } catch (error) {
             next(error);
         }
@@ -53,21 +51,21 @@ export const FieldController = {
             const id = Number(req.params.id);
 
             if (Number.isNaN(id)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid field id"
-                 });
+                throw { 
+                    status: 400, 
+                    message: "Invalid field ID" 
+                };
                 }
 
             const updated = await FieldModel.update(id, req.body);
 
             if(!updated) {
-                return res.status(404).json({success: false, error: "Field not found"})
+                throw { 
+                    status: 404, 
+                    message: "Field not found" 
+                };
             }
-            res.json({
-                success: true,
-                data: updated
-            });
+            return successResponse(res, updated);
         } catch (error) {
             next(error);
         }
@@ -85,13 +83,13 @@ export const FieldController = {
             const deleted = await FieldModel.remove(id);
             
             if (!deleted) {
-                return res.status(404).json({ 
-                    success: false,
-                     message: "Field not found"
-                    });
+                throw { 
+                    status: 400, 
+                    message: "Invalid field ID" 
+                };
                 }
 
-            res.json({ success: true, message: "Field deleted" });
+            return successResponse(res, { message: "Field deleted" });
         } catch (error) {
             next(error);
         }

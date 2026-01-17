@@ -1,46 +1,42 @@
 import { NextFunction, Request, Response } from "express";
 import { CategoryModel } from "../models/categoeyModel";
+import { successResponse } from "../middleware/success";
 
 export const CategoryController = {
     async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             const categories = await CategoryModel.getAll();
-            res.json({
-                success: true, 
-                data: categories
-            });
+            return successResponse(res, categories);
         } catch (error) {
             next(error);            
         }
     },
+    
     async getById(req: Request, res: Response, next: NextFunction) {
         try {
             const id = Number(req.params.id);
             const category = await CategoryModel.getById(id);
             
             if(!category) {
-                return res.status(404).json({
-                    success: false,
-                    error: "Category not found"
-                });
+                throw { 
+                    status: 400, 
+                    message: "Category already exists" 
+                };
             }
-            res.json({
-                success: true, data: category
-            });
+            
+            return successResponse(res, category, 201);
         } catch (error) {
             next(error);
         }
     },
+
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const { name } = req.body;
 
             const category = await CategoryModel.create(name);
 
-            res.status(201).json({ 
-                success: true,
-                data: category
-            });
+            return successResponse(res, category, 201);
         } catch (error) {
             next(error);
         }
@@ -53,29 +49,31 @@ export const CategoryController = {
             const updated = await CategoryModel.update(id, name);
 
             if (!updated) {
-                return res.status(404).json( {
-                    success: false,
-                    error: "Category not found"
-                });
+                throw { 
+                    status: 404, 
+                    message: "Category not found" 
+                };
             }
 
-            res.json( {
-                success: true, 
-                data: updated
-            });
+            return successResponse(res, updated);
         } catch (error) {
             next(error);
         }
     },
+    
     async remove (req: Request, res: Response, next: NextFunction) {
         try {
             const id = Number(req.params.id);
-            await CategoryModel.remove(id);
+            
+            const deleted = await CategoryModel.remove(id);
 
-            res.json( {
-                success: true,
-                message: "Category deleted"
-            });
+            if (!deleted) {
+                throw { 
+                    status: 404, 
+                    message: "Category not found" };
+            }
+
+            return successResponse(res, { message: "Category deleted" });
         } catch (error) {
             next(error);
         }
