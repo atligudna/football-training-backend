@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -16,6 +17,13 @@ import { errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 
 export const app = express();
+
+app.use(
+  cors({
+    origin: ["http://localhost:3001", "http://localhost:3000"],
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 

@@ -2,7 +2,7 @@
 ### Node.js · Express · PostgreSQL · TypeScript · JWT · Zod
 
 This backend powers a complete football training management system: drills, categories, fields, equipment, drag-and-drop drill items, training sessions, analytics and more.
-
++
 It is built using **clean architecture**, **middleware-driven validation**, **PostgreSQL relations**, and a fully centralized **error handling layer**.
 
 ---
