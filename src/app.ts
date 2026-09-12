@@ -14,6 +14,7 @@ import drillEquipmentRoutes from "./routes/drillEquipmentRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import trainingStoryRoutes from "./routes/trainingStoryRoutes";
 import trainingPitchRoutes from "./routes/trainingPitchRoutes";
+import trainingActivityBlockRoutes from "./routes/trainingActivityBlockRoutes";
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use("/equipment", equipmentRoutes);
 app.use("/sessions", sessionRoutes);
 app.use("/training-stories", trainingStoryRoutes);
 app.use("/pitches", trainingPitchRoutes);
+app.use("/activity-blocks", trainingActivityBlockRoutes);
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({
