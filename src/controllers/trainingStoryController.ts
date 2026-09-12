@@ -124,7 +124,7 @@ export const TrainingStoryController = {
             theme: req.body.theme,
             tags: req.body.tags ?? [],
             objectives: req.body.objectives ?? [],
-            status: req.body.status ?? "draft",
+            status: req.body.review ? "completed" : req.body.status ?? "draft",
             pitches: req.body.pitches ?? [],
             review: req.body.review,
         });
@@ -192,7 +192,7 @@ export const TrainingStoryController = {
             theme: req.body.theme,
             tags: req.body.tags ?? [],
             objectives: req.body.objectives ?? [],
-            status: req.body.status ?? "draft",
+            status: req.body.review ? "completed" : req.body.status ?? "draft",
             pitches: req.body.pitches ?? [],
             review: req.body.review,
         });
