@@ -8,6 +8,7 @@ const SECRET = process.env.JWT_SECRET!;
 export interface AuthRequest extends Request {
     user?: {
         id: number;
+        email: string;
         role: string;
     };
 }
@@ -40,6 +41,7 @@ export const requireAuth = async (
 
         req.user = {
             id: user.id,
+            email: user.email,
             role: user.role
         };
         next();
