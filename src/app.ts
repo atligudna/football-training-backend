@@ -16,6 +16,9 @@ import trainingStoryRoutes from "./routes/trainingStoryRoutes";
 import trainingPitchRoutes from "./routes/trainingPitchRoutes";
 import trainingActivityBlockRoutes from "./routes/trainingActivityBlockRoutes";
 import trainingActivityRoutes from "./routes/trainingActivityRoutes";
+import trainingCoachingPointRoutes from "./routes/trainingCoachingPointRoutes";
+import trainingPlayerFocusRoutes from "./routes/trainingPlayerFocusRoutes";
+import trainingEquipmentItemRoutes from "./routes/trainingEquipmentItemRoutes";
 
 dotenv.config();
 
@@ -43,6 +46,9 @@ app.use("/training-stories", trainingStoryRoutes);
 app.use("/pitches", trainingPitchRoutes);
 app.use("/activity-blocks", trainingActivityBlockRoutes);
 app.use("/activities", trainingActivityRoutes);
+app.use("/coaching-points", trainingCoachingPointRoutes);
+app.use("/player-focus", trainingPlayerFocusRoutes);
+app.use("/equipment-items", trainingEquipmentItemRoutes);
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({
