@@ -8,6 +8,7 @@ import {
     updateTrainingStory,
     deleteTrainingStoryByIdAndOwnerEmail,
 } from "../models/trainingStoryModel";
+import { getFullTrainingStoryByIdAndOwnerEmail } from "../models/trainingStoryFullModel";
 
 export const TrainingStoryController = {
     async getAll(req: AuthRequest, res: Response) {
@@ -35,6 +36,32 @@ export const TrainingStoryController = {
         }
 
         const story = await getTrainingStoryByIdAndOwnerEmail(
+            req.params.id,
+            req.user.email
+        );
+
+        if (!story) {
+            return res.status(404).json({
+                success: false,
+                message: "Training story not found",
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: story,
+        });
+    },
+
+    async getFullById(req: AuthRequest, res: Response) {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
+
+        const story = await getFullTrainingStoryByIdAndOwnerEmail(
             req.params.id,
             req.user.email
         );
@@ -118,28 +145,28 @@ export const TrainingStoryController = {
         });
     },
     async remove(req: AuthRequest, res: Response) {
-  if (!req.user) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized",
-    });
-  }
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
 
-  const deleted = await deleteTrainingStoryByIdAndOwnerEmail(
-    req.params.id,
-    req.user.email
-  );
+        const deleted = await deleteTrainingStoryByIdAndOwnerEmail(
+            req.params.id,
+            req.user.email
+        );
 
-  if (!deleted) {
-    return res.status(404).json({
-      success: false,
-      message: "Training story not found",
-    });
-  }
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                message: "Training story not found",
+            });
+        }
 
-  return res.json({
-    success: true,
-    message: "Training story deleted",
-  });
-},
+        return res.json({
+            success: true,
+            message: "Training story deleted",
+        });
+    },
 };
