@@ -421,3 +421,363 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
     };
   });
 }
+
+interface TransactionClient {
+  one<T>(query: string, values?: unknown[]): Promise<T>;
+  none(query: string, values?: unknown[]): Promise<null>;
+}
+
+export interface SaveFullTrainingStoryInput {
+  ownerEmail: string;
+  title: string;
+  description?: string;
+  ageGroup: string;
+  durationMinutes: number;
+  theme?: string | null;
+  tags?: string[];
+  objectives?: string[];
+  status?: TrainingStoryStatus;
+  pitches?: SaveFullPitchInput[];
+  review?: SaveFullTrainingReviewInput;
+}
+
+export interface UpdateFullTrainingStoryInput extends SaveFullTrainingStoryInput {
+  id: string;
+}
+
+export interface SaveFullPitchInput {
+  name: string;
+  coachName?: string | null;
+  playerGroup?: string | null;
+  order?: number;
+  activityBlocks?: SaveFullActivityBlockInput[];
+}
+
+export interface SaveFullActivityBlockInput {
+  title: string;
+  type: string;
+  order?: number;
+  durationMinutes: number;
+  activities?: SaveFullActivityInput[];
+}
+
+export interface SaveFullActivityInput {
+  title: string;
+  type: string;
+  description?: string;
+  durationMinutes: number;
+  notes?: string | null;
+  order?: number;
+  coachingPoints?: SaveFullTextItemInput[];
+  playerFocus?: SaveFullTextItemInput[];
+  equipment?: SaveFullEquipmentItemInput[];
+}
+
+export interface SaveFullTextItemInput {
+  text: string;
+  order?: number;
+}
+
+export interface SaveFullEquipmentItemInput {
+  name: string;
+  quantity?: number;
+  order?: number;
+}
+
+export interface SaveFullTrainingReviewInput {
+  completedAt?: string;
+  overallRating: number;
+  wentWell?: string;
+  improveNextTime?: string;
+  notes?: string;
+}
+
+async function insertFullTrainingStoryChildren(
+  transaction: TransactionClient,
+  trainingStoryId: string,
+  input: SaveFullTrainingStoryInput
+) {
+  for (const [pitchIndex, pitch] of (input.pitches ?? []).entries()) {
+    const savedPitch = await transaction.one<{ id: string }>(
+      `
+        INSERT INTO pitches (
+          training_story_id,
+          name,
+          coach_name,
+          player_group,
+          order_index
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `,
+      [
+        trainingStoryId,
+        pitch.name,
+        pitch.coachName ?? null,
+        pitch.playerGroup ?? null,
+        pitch.order ?? pitchIndex + 1,
+      ]
+    );
+
+    for (const [blockIndex, block] of (pitch.activityBlocks ?? []).entries()) {
+      const savedBlock = await transaction.one<{ id: string }>(
+        `
+          INSERT INTO activity_blocks (
+            pitch_id,
+            title,
+            type,
+            order_index,
+            duration_minutes
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id
+        `,
+        [
+          savedPitch.id,
+          block.title,
+          block.type,
+          block.order ?? blockIndex + 1,
+          block.durationMinutes,
+        ]
+      );
+
+      for (const [activityIndex, activity] of (
+        block.activities ?? []
+      ).entries()) {
+        const savedActivity = await transaction.one<{ id: string }>(
+          `
+            INSERT INTO activities (
+              activity_block_id,
+              title,
+              type,
+              description,
+              duration_minutes,
+              notes,
+              order_index
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+          `,
+          [
+            savedBlock.id,
+            activity.title,
+            activity.type,
+            activity.description ?? "",
+            activity.durationMinutes,
+            activity.notes ?? null,
+            activity.order ?? activityIndex + 1,
+          ]
+        );
+
+        for (const [pointIndex, point] of (
+          activity.coachingPoints ?? []
+        ).entries()) {
+          await transaction.none(
+            `
+              INSERT INTO coaching_points (
+                activity_id,
+                text,
+                order_index
+              )
+              VALUES ($1, $2, $3)
+            `,
+            [
+              savedActivity.id,
+              point.text,
+              point.order ?? pointIndex + 1,
+            ]
+          );
+        }
+
+        for (const [focusIndex, focus] of (
+          activity.playerFocus ?? []
+        ).entries()) {
+          await transaction.none(
+            `
+              INSERT INTO player_focus (
+                activity_id,
+                text,
+                order_index
+              )
+              VALUES ($1, $2, $3)
+            `,
+            [
+              savedActivity.id,
+              focus.text,
+              focus.order ?? focusIndex + 1,
+            ]
+          );
+        }
+
+        for (const [equipmentIndex, item] of (
+          activity.equipment ?? []
+        ).entries()) {
+          await transaction.none(
+            `
+              INSERT INTO equipment_items (
+                activity_id,
+                name,
+                quantity,
+                order_index
+              )
+              VALUES ($1, $2, $3, $4)
+            `,
+            [
+              savedActivity.id,
+              item.name,
+              item.quantity ?? 1,
+              item.order ?? equipmentIndex + 1,
+            ]
+          );
+        }
+      }
+    }
+  }
+
+  if (input.review) {
+    await transaction.none(
+      `
+        INSERT INTO training_reviews (
+          training_story_id,
+          completed_at,
+          overall_rating,
+          went_well,
+          improve_next_time,
+          notes
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `,
+      [
+        trainingStoryId,
+        input.review.completedAt ?? new Date().toISOString(),
+        input.review.overallRating,
+        input.review.wentWell ?? "",
+        input.review.improveNextTime ?? "",
+        input.review.notes ?? "",
+      ]
+    );
+  }
+}
+
+export async function createFullTrainingStory(
+  input: SaveFullTrainingStoryInput
+): Promise<FullTrainingStory> {
+  const storyId = await db.tx(async (transaction) => {
+    const story = await transaction.one<{ id: string }>(
+      `
+        INSERT INTO training_stories (
+          owner_email,
+          title,
+          description,
+          age_group,
+          duration_minutes,
+          theme,
+          tags,
+          objectives,
+          status
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `,
+      [
+        input.ownerEmail,
+        input.title,
+        input.description ?? "",
+        input.ageGroup,
+        input.durationMinutes,
+        input.theme ?? null,
+        input.tags ?? [],
+        input.objectives ?? [],
+        input.status ?? "draft",
+      ]
+    );
+
+    await insertFullTrainingStoryChildren(transaction, story.id, input);
+
+    return story.id;
+  });
+
+  const fullStory = await getFullTrainingStoryByIdAndOwnerEmail(
+    storyId,
+    input.ownerEmail
+  );
+
+  if (!fullStory) {
+    throw new Error("Saved training story could not be loaded");
+  }
+
+  return fullStory;
+}
+
+export async function updateFullTrainingStory(
+  input: UpdateFullTrainingStoryInput
+): Promise<FullTrainingStory | null> {
+  const storyId = await db.tx(async (transaction) => {
+    const existingStory = await transaction.oneOrNone<{ id: string }>(
+      `
+        SELECT id
+        FROM training_stories
+        WHERE id = $1
+          AND owner_email = $2
+        LIMIT 1
+      `,
+      [input.id, input.ownerEmail]
+    );
+
+    if (!existingStory) return null;
+
+    await transaction.none(
+      `
+        UPDATE training_stories
+        SET
+          title = $3,
+          description = $4,
+          age_group = $5,
+          duration_minutes = $6,
+          theme = $7,
+          tags = $8,
+          objectives = $9,
+          status = $10,
+          updated_at = now()
+        WHERE id = $1
+          AND owner_email = $2
+      `,
+      [
+        input.id,
+        input.ownerEmail,
+        input.title,
+        input.description ?? "",
+        input.ageGroup,
+        input.durationMinutes,
+        input.theme ?? null,
+        input.tags ?? [],
+        input.objectives ?? [],
+        input.status ?? "draft",
+      ]
+    );
+
+    await transaction.none(
+      `
+        DELETE FROM training_reviews
+        WHERE training_story_id = $1
+      `,
+      [input.id]
+    );
+
+    await transaction.none(
+      `
+        DELETE FROM pitches
+        WHERE training_story_id = $1
+      `,
+      [input.id]
+    );
+
+    await insertFullTrainingStoryChildren(transaction, input.id, input);
+
+    return input.id;
+  });
+
+  if (!storyId) return null;
+
+  return getFullTrainingStoryByIdAndOwnerEmail(storyId, input.ownerEmail);
+}
