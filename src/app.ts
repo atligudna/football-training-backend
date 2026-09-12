@@ -15,6 +15,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import trainingStoryRoutes from "./routes/trainingStoryRoutes";
 import trainingPitchRoutes from "./routes/trainingPitchRoutes";
 import trainingActivityBlockRoutes from "./routes/trainingActivityBlockRoutes";
+import trainingActivityRoutes from "./routes/trainingActivityRoutes";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/sessions", sessionRoutes);
 app.use("/training-stories", trainingStoryRoutes);
 app.use("/pitches", trainingPitchRoutes);
 app.use("/activity-blocks", trainingActivityBlockRoutes);
+app.use("/activities", trainingActivityRoutes);
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({
