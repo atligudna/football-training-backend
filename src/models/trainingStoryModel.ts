@@ -132,3 +132,79 @@ export async function createTrainingStory(
     ]
   );
 }
+
+export interface UpdateTrainingStoryInput {
+  id: string;
+  ownerEmail: string;
+  title: string;
+  description: string;
+  ageGroup: string;
+  durationMinutes: number;
+  theme?: string | null;
+  tags?: string[];
+  objectives?: string[];
+  status: TrainingStoryStatus;
+}
+
+export async function updateTrainingStory(
+  input: UpdateTrainingStoryInput
+): Promise<TrainingStoryRow | null> {
+  return db.oneOrNone<TrainingStoryRow>(
+    `
+      UPDATE training_stories
+      SET
+        title = $3,
+        description = $4,
+        age_group = $5,
+        duration_minutes = $6,
+        theme = $7,
+        tags = $8,
+        objectives = $9,
+        status = $10,
+        updated_at = now()
+      WHERE id = $1
+        AND owner_email = $2
+      RETURNING
+        id,
+        owner_email,
+        title,
+        description,
+        age_group,
+        duration_minutes,
+        theme,
+        tags,
+        objectives,
+        status,
+        created_at,
+        updated_at
+    `,
+    [
+      input.id,
+      input.ownerEmail,
+      input.title,
+      input.description,
+      input.ageGroup,
+      input.durationMinutes,
+      input.theme ?? null,
+      input.tags ?? [],
+      input.objectives ?? [],
+      input.status,
+    ]
+  );
+}
+
+export async function deleteTrainingStoryByIdAndOwnerEmail(
+  id: string,
+  ownerEmail: string
+): Promise<boolean> {
+  const result = await db.result(
+    `
+      DELETE FROM training_stories
+      WHERE id = $1
+        AND owner_email = $2
+    `,
+    [id, ownerEmail]
+  );
+
+  return result.rowCount > 0;
+}
