@@ -28,6 +28,7 @@ interface PitchRow {
   name: string;
   coach_name: string | null;
   player_group: string | null;
+  group_id: number | null;
   order_index: number;
 }
 
@@ -103,6 +104,7 @@ export interface FullPitch {
   name: string;
   coachName?: string;
   playerGroup?: string;
+  groupId?: string;
   order: number;
   activityBlocks: FullActivityBlock[];
 }
@@ -192,6 +194,7 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
           name,
           coach_name,
           player_group,
+          group_id,
           order_index
         FROM pitches
         WHERE training_story_id = $1
@@ -389,6 +392,7 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
       name: pitch.name,
       coachName: pitch.coach_name ?? undefined,
       playerGroup: pitch.player_group ?? undefined,
+      groupId: pitch.group_id !== null ? String(pitch.group_id) : undefined,
       order: pitch.order_index,
       activityBlocks: activityBlocks
         .filter((block) => block.pitch_id === pitch.id)
@@ -409,12 +413,12 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
       pitches: fullPitches,
       review: review
         ? {
-            completedAt: toIsoString(review.completed_at),
-            overallRating: review.overall_rating,
-            wentWell: review.went_well,
-            improveNextTime: review.improve_next_time,
-            notes: review.notes,
-          }
+          completedAt: toIsoString(review.completed_at),
+          overallRating: review.overall_rating,
+          wentWell: review.went_well,
+          improveNextTime: review.improve_next_time,
+          notes: review.notes,
+        }
         : undefined,
       createdAt: toIsoString(story.created_at),
       updatedAt: toIsoString(story.updated_at),
@@ -449,6 +453,7 @@ export interface SaveFullPitchInput {
   name: string;
   coachName?: string | null;
   playerGroup?: string | null;
+  groupId?: string | null;
   order?: number;
   activityBlocks?: SaveFullActivityBlockInput[];
 }
@@ -500,21 +505,40 @@ async function insertFullTrainingStoryChildren(
   for (const [pitchIndex, pitch] of (input.pitches ?? []).entries()) {
     const savedPitch = await transaction.one<{ id: string }>(
       `
-        INSERT INTO pitches (
-          training_story_id,
-          name,
-          coach_name,
-          player_group,
-          order_index
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id
-      `,
+    INSERT INTO pitches (
+      training_story_id,
+      name,
+      coach_name,
+      player_group,
+      group_id,
+      order_index
+    )
+    VALUES (
+      $1,
+      $2,
+      $3,
+      $4,
+      (
+        SELECT g.id
+        FROM groups g
+        JOIN users u
+          ON u.id = g.created_by
+        WHERE g.id = $5::bigint
+          AND u.email = $6
+          AND g.is_deleted = FALSE
+        LIMIT 1
+      ),
+      $7
+    )
+    RETURNING id
+  `,
       [
         trainingStoryId,
         pitch.name,
         pitch.coachName ?? null,
         pitch.playerGroup ?? null,
+        pitch.groupId ?? null,
+        input.ownerEmail,
         pitch.order ?? pitchIndex + 1,
       ]
     );

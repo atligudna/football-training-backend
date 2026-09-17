@@ -69,6 +69,7 @@ export const TrainingPitchController = {
       name: req.body.name,
       coachName: req.body.coachName,
       playerGroup: req.body.playerGroup,
+      groupId: req.body.groupId,
       orderIndex: Number(req.body.orderIndex ?? 1),
     });
 
@@ -111,6 +112,12 @@ export const TrainingPitchController = {
       name: req.body.name ?? existingPitch.name,
       coachName: req.body.coachName ?? existingPitch.coach_name,
       playerGroup: req.body.playerGroup ?? existingPitch.player_group,
+      groupId:
+        req.body.groupId !== undefined
+          ? req.body.groupId
+          : existingPitch.group_id
+            ? String(existingPitch.group_id)
+            : null,
       orderIndex: Number(req.body.orderIndex ?? existingPitch.order_index),
     });
 

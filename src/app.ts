@@ -19,6 +19,8 @@ import trainingActivityRoutes from "./routes/trainingActivityRoutes";
 import trainingCoachingPointRoutes from "./routes/trainingCoachingPointRoutes";
 import trainingPlayerFocusRoutes from "./routes/trainingPlayerFocusRoutes";
 import trainingEquipmentItemRoutes from "./routes/trainingEquipmentItemRoutes";
+import playerRoutes from "./routes/playerRoutes.js";
+import groupRoutes from "./routes/groupRoutes.js";
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ app.use(express.json());
 
 app.use ("/auth", authRoutes);
 app.use("/users", userRoutes);
+app.use("/players", playerRoutes);
+app.use("/groups", groupRoutes);
 app.use("/fields", fieldRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/drills", drillRoutes);
@@ -49,6 +53,7 @@ app.use("/activities", trainingActivityRoutes);
 app.use("/coaching-points", trainingCoachingPointRoutes);
 app.use("/player-focus", trainingPlayerFocusRoutes);
 app.use("/equipment-items", trainingEquipmentItemRoutes);
+
 
 app.get("/test-protected", requireAuth, (req, res) => {
     res.json({
