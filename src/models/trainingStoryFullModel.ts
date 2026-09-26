@@ -27,6 +27,7 @@ interface PitchRow {
   training_story_id: string;
   name: string;
   coach_name: string | null;
+  coach_id: number | null;
   player_group: string | null;
   group_id: number | null;
   order_index: number;
@@ -103,6 +104,7 @@ export interface FullPitch {
   id: string;
   name: string;
   coachName?: string;
+  coachId?: string;
   playerGroup?: string;
   groupId?: string;
   order: number;
@@ -193,6 +195,7 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
           training_story_id,
           name,
           coach_name,
+          coach_id,
           player_group,
           group_id,
           order_index
@@ -391,6 +394,10 @@ export async function getFullTrainingStoryByIdAndOwnerEmail(
       id: pitch.id,
       name: pitch.name,
       coachName: pitch.coach_name ?? undefined,
+      coachId:
+        pitch.coach_id !== null
+          ? String(pitch.coach_id)
+          : undefined,
       playerGroup: pitch.player_group ?? undefined,
       groupId: pitch.group_id !== null ? String(pitch.group_id) : undefined,
       order: pitch.order_index,
@@ -452,6 +459,7 @@ export interface UpdateFullTrainingStoryInput extends SaveFullTrainingStoryInput
 export interface SaveFullPitchInput {
   name: string;
   coachName?: string | null;
+  coachId?: string | null;
   playerGroup?: string | null;
   groupId?: string | null;
   order?: number;
@@ -503,46 +511,59 @@ async function insertFullTrainingStoryChildren(
   input: SaveFullTrainingStoryInput
 ) {
   for (const [pitchIndex, pitch] of (input.pitches ?? []).entries()) {
-    const savedPitch = await transaction.one<{ id: string }>(
-      `
-    INSERT INTO pitches (
-      training_story_id,
-      name,
-      coach_name,
-      player_group,
-      group_id,
-      order_index
-    )
-    VALUES (
-      $1,
-      $2,
-      $3,
-      $4,
-      (
-        SELECT g.id
-        FROM groups g
-        JOIN users u
-          ON u.id = g.created_by
-        WHERE g.id = $5::bigint
-          AND u.email = $6
-          AND g.is_deleted = FALSE
-        LIMIT 1
-      ),
-      $7
-    )
-    RETURNING id
-  `,
-      [
-        trainingStoryId,
-        pitch.name,
-        pitch.coachName ?? null,
-        pitch.playerGroup ?? null,
-        pitch.groupId ?? null,
-        input.ownerEmail,
-        pitch.order ?? pitchIndex + 1,
-      ]
-    );
-
+    const savedPitch =
+      await transaction.one<{ id: string }>(
+        `
+      INSERT INTO pitches (
+        training_story_id,
+        name,
+        coach_name,
+        coach_id,
+        player_group,
+        group_id,
+        order_index
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        (
+          SELECT c.id
+          FROM coaches c
+          JOIN users u
+            ON u.id = c.created_by
+          WHERE c.id = $4::bigint
+            AND u.email = $7
+            AND c.is_deleted = FALSE
+          LIMIT 1
+        ),
+        $5,
+        (
+          SELECT g.id
+          FROM groups g
+          JOIN users u
+            ON u.id = g.created_by
+          WHERE g.id = $6::bigint
+            AND u.email = $7
+            AND g.is_deleted = FALSE
+          LIMIT 1
+        ),
+        $8
+      )
+      RETURNING id
+    `,
+        [
+          trainingStoryId,
+          pitch.name,
+          pitch.coachName ?? null,
+          pitch.coachId ?? null,
+          pitch.playerGroup ?? null,
+          pitch.groupId ?? null,
+          input.ownerEmail,
+          pitch.order ??
+          pitchIndex + 1,
+        ]
+      );
     for (const [blockIndex, block] of (pitch.activityBlocks ?? []).entries()) {
       const savedBlock = await transaction.one<{ id: string }>(
         `

@@ -5,6 +5,7 @@ export interface TrainingPitchRow {
   training_story_id: string;
   name: string;
   coach_name: string | null;
+  coach_id: number | null;
   player_group: string | null;
   group_id: number | null;
   order_index: number;
@@ -17,6 +18,7 @@ export interface CreateTrainingPitchInput {
   ownerEmail: string;
   name: string;
   coachName?: string | null;
+  coachId?: string | null;
   playerGroup?: string | null;
   groupId?: string | null;
   orderIndex?: number;
@@ -27,6 +29,7 @@ export interface UpdateTrainingPitchInput {
   ownerEmail: string;
   name: string;
   coachName?: string | null;
+  coachId?: string | null;
   playerGroup?: string | null;
   groupId?: string | null;
   orderIndex: number;
@@ -43,6 +46,7 @@ export async function getPitchesByTrainingStoryId(
         p.training_story_id,
         p.name,
         p.coach_name,
+        p.coach_id,
         p.player_group,
         p.group_id,
         p.order_index,
@@ -70,6 +74,7 @@ export async function getPitchByIdAndOwnerEmail(
         p.training_story_id,
         p.name,
         p.coach_name,
+        p.coach_id,
         p.player_group,
         p.group_id,
         p.order_index,
@@ -95,6 +100,7 @@ export async function createTrainingPitch(
         training_story_id,
         name,
         coach_name,
+        coach_id,
         player_group,
         group_id,
         order_index
@@ -103,18 +109,28 @@ export async function createTrainingPitch(
         ts.id,
         $3,
         $4,
-        $5,
+        (
+          SELECT c.id
+          FROM coaches c
+          JOIN users u
+            ON u.id = c.created_by
+          WHERE c.id = $5::bigint
+            AND u.email = $2
+            AND c.is_deleted = FALSE
+          LIMIT 1
+        ),
+        $6,
         (
           SELECT g.id
           FROM groups g
           JOIN users u
             ON u.id = g.created_by
-          WHERE g.id = $6::bigint
+          WHERE g.id = $7::bigint
             AND u.email = $2
             AND g.is_deleted = FALSE
           LIMIT 1
         ),
-        $7
+        $8
       FROM training_stories ts
       WHERE ts.id = $1
         AND ts.owner_email = $2
@@ -123,6 +139,7 @@ export async function createTrainingPitch(
         training_story_id,
         name,
         coach_name,
+        coach_id,
         player_group,
         group_id,
         order_index,
@@ -134,6 +151,7 @@ export async function createTrainingPitch(
       input.ownerEmail,
       input.name,
       input.coachName ?? null,
+      input.coachId ?? null,
       input.playerGroup ?? null,
       input.groupId ?? null,
       input.orderIndex ?? 1,
@@ -150,18 +168,28 @@ export async function updateTrainingPitch(
       SET
         name = $3,
         coach_name = $4,
-        player_group = $5,
+        coach_id = (
+          SELECT c.id
+          FROM coaches c
+          JOIN users u
+            ON u.id = c.created_by
+          WHERE c.id = $5::bigint
+            AND u.email = $2
+            AND c.is_deleted = FALSE
+          LIMIT 1
+        ),
+        player_group = $6,
         group_id = (
           SELECT g.id
           FROM groups g
           JOIN users u
             ON u.id = g.created_by
-          WHERE g.id = $6::bigint
+          WHERE g.id = $7::bigint
             AND u.email = $2
             AND g.is_deleted = FALSE
           LIMIT 1
         ),
-        order_index = $7,
+        order_index = $8,
         updated_at = now()
       FROM training_stories ts
       WHERE p.training_story_id = ts.id
@@ -172,6 +200,7 @@ export async function updateTrainingPitch(
         p.training_story_id,
         p.name,
         p.coach_name,
+        p.coach_id,
         p.player_group,
         p.group_id,
         p.order_index,
@@ -183,6 +212,7 @@ export async function updateTrainingPitch(
       input.ownerEmail,
       input.name,
       input.coachName ?? null,
+      input.coachId ?? null,
       input.playerGroup ?? null,
       input.groupId ?? null,
       input.orderIndex,
