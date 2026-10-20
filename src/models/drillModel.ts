@@ -23,6 +23,7 @@ interface DrillRow {
   tags: string[];
   coaching_points: DrillCoachingPoint[];
   equipment_json: DrillEquipmentItem[];
+  pitch_diagram_id: string | null;
   created_by: number;
   created_at: Date;
   updated_at: Date;
@@ -39,6 +40,7 @@ export interface Drill {
   tags: string[];
   coachingPoints: DrillCoachingPoint[];
   equipment: DrillEquipmentItem[];
+  pitchDiagramId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +54,7 @@ export interface CreateDrillInput {
   tags?: string[];
   coachingPoints?: DrillCoachingPoint[];
   equipment?: DrillEquipmentItem[];
+  pitchDiagramId?: string | null;
   createdBy: number;
 }
 
@@ -64,6 +67,7 @@ export interface UpdateDrillInput {
   tags?: string[];
   coachingPoints?: DrillCoachingPoint[];
   equipment?: DrillEquipmentItem[];
+  pitchDiagramId?: string | null;
 }
 
 function mapRowToDrill(row: DrillRow): Drill {
@@ -77,9 +81,42 @@ function mapRowToDrill(row: DrillRow): Drill {
     tags: row.tags ?? [],
     coachingPoints: row.coaching_points ?? [],
     equipment: row.equipment_json ?? [],
+    pitchDiagramId: row.pitch_diagram_id ?? undefined,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };
+}
+
+async function validatePitchDiagramAccess(
+  pitchDiagramId: string | null | undefined,
+  userId: number
+) {
+  if (!pitchDiagramId) {
+    return;
+  }
+
+  const diagram =
+    await db.oneOrNone<{ id: string }>(
+      `
+        SELECT id
+        FROM pitch_diagrams
+        WHERE id = $1
+          AND created_by = $2
+          AND is_deleted = FALSE
+      `,
+      [
+        pitchDiagramId,
+        userId,
+      ]
+    );
+
+  if (!diagram) {
+    throw {
+      status: 400,
+      message:
+        "Invalid pitch diagram",
+    };
+  }
 }
 
 export const DrillModel = {
@@ -114,6 +151,10 @@ export const DrillModel = {
   },
 
   async create(data: CreateDrillInput): Promise<Drill> {
+    await validatePitchDiagramAccess(
+      data.pitchDiagramId,
+      data.createdBy
+    );
     const row = await db.one<DrillRow>(
       `
       INSERT INTO drills
@@ -126,22 +167,28 @@ export const DrillModel = {
           tags,
           coaching_points,
           equipment_json,
+          pitch_diagram_id,
           difficulty,
           created_by
         )
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10)
+          ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11)
       RETURNING *
       `,
       [
         data.title,
         data.type,
         data.description ?? "",
-        data.durationMinutes ?? 0,
+        data.durationMinutes ?? null,
         data.ageGroup ?? null,
         data.tags ?? [],
-        JSON.stringify(data.coachingPoints ?? []),
-        JSON.stringify(data.equipment ?? []),
+        JSON.stringify(
+          data.coachingPoints ?? []
+        ),
+        JSON.stringify(
+          data.equipment ?? []
+        ),
+        data.pitchDiagramId ?? null,
         "easy",
         data.createdBy,
       ]
@@ -158,6 +205,15 @@ export const DrillModel = {
     const existing = await this.getById(id, userId);
 
     if (!existing) return null;
+    if (
+      data.pitchDiagramId !==
+      undefined
+    ) {
+      await validatePitchDiagramAccess(
+        data.pitchDiagramId,
+        userId
+      );
+    }
 
     const row = await db.one<DrillRow>(
       `
@@ -171,6 +227,7 @@ export const DrillModel = {
         tags = $8,
         coaching_points = $9::jsonb,
         equipment_json = $10::jsonb,
+        pitch_diagram_id = $11,
         updated_at = NOW()
       WHERE id = $1
         AND created_by = $2
@@ -186,8 +243,18 @@ export const DrillModel = {
         data.durationMinutes ?? existing.durationMinutes,
         data.ageGroup ?? existing.ageGroup ?? null,
         data.tags ?? existing.tags,
-        JSON.stringify(data.coachingPoints ?? existing.coachingPoints),
-        JSON.stringify(data.equipment ?? existing.equipment),
+        JSON.stringify(
+          data.coachingPoints ??
+          existing.coachingPoints
+        ),
+        JSON.stringify(
+          data.equipment ??
+          existing.equipment
+        ),
+        data.pitchDiagramId !== undefined
+          ? data.pitchDiagramId
+          : existing.pitchDiagramId ??
+          null,
       ]
     );
 
@@ -243,5 +310,5 @@ export const DrillModel = {
     return row ? mapRowToDrill(row) : null;
   },
 
-  
+
 };

@@ -22,6 +22,7 @@ import trainingEquipmentItemRoutes from "./routes/trainingEquipmentItemRoutes";
 import playerRoutes from "./routes/playerRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import coachRoutes from "./routes/coachRoutes.js";
+import pitchDiagramRoutes from "./routes/pitchDiagramRoutes.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/users", userRoutes);
 app.use("/players", playerRoutes);
 app.use("/groups", groupRoutes);
 app.use("/coaches", coachRoutes);
+app.use("/pitch-diagrams", pitchDiagramRoutes);
 app.use("/fields", fieldRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/drills", drillRoutes);
